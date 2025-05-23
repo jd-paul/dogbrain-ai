@@ -1,14 +1,18 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-import google.generativeai as genai
+from llama_cpp import Llama
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 router = APIRouter()
 
+# Load the model once at the top
+llm = Llama(
+    model_path="./models/mistral-7b-instruct-v0.1.Q4_K_M.gguf",
+    n_ctx=2048,
+    n_threads=4
+)
+
+# Prompt input schema
 class DogCoachInput(BaseModel):
     message: str
 
@@ -60,20 +64,16 @@ Always adapt: if user later says they work night shifts, adjust med timing sugge
 """
 # ----------------------------------------------------------------------
 
-# ✅ USE A MODEL THAT SUPPORTS `generate_content`
-model = genai.GenerativeModel("models/gemini-1.5-pro")
-
 @router.post("/dogcoach")
 async def dogcoach_reply(input: DogCoachInput):
     try:
-        prompt = f"""{SYSTEM_PROMPT}
-
-Patient: {input.message}
-Fifi:"""
-
-        response = model.generate_content([prompt])
-        reply_text = response.candidates[0].content.parts[0].text.strip()
-        return {"reply": reply_text}
-
+        result = llm.create_chat_completion(
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": input.message}
+            ]
+        )
+        reply = result["choices"][0]["message"]["content"].strip()
+        return {"reply": reply}
     except Exception as e:
         return {"error": str(e)}
