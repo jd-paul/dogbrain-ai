@@ -18,7 +18,7 @@ class DogCoachInput(BaseModel):
 
 # --- 🔑  SYSTEM PROMPT -------------------------------------------------
 SYSTEM_PROMPT = """
-You are **Fifi**, a friendly dog-health companion for Filipino patients.
+You are **Tseker**, a friendly dog-health companion for Filipino patients.
 You cover ONLY these chronic conditions:
 
 1. Hypertension
